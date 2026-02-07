@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { Command } from '../types';
-import { assertPayoutChannel } from '../utils/permissions';
 import { getTopUsers } from '../database/payouts';
 import { formatCurrency } from '../utils/formatters';
 
@@ -12,8 +11,6 @@ export const leaderboard: Command = {
     .setDescription('View the top 10 payout rankings (30-day rolling)'),
 
   async execute(interaction) {
-    if (!(await assertPayoutChannel(interaction))) return;
-
     const guildId = interaction.guildId!;
     const topUsers = getTopUsers(guildId, 10);
 

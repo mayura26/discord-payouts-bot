@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { Command } from '../types';
-import { assertPayoutChannel } from '../utils/permissions';
 
 export const help: Command = {
   data: new SlashCommandBuilder()
@@ -8,8 +7,6 @@ export const help: Command = {
     .setDescription('Show all available payout bot commands'),
 
   async execute(interaction) {
-    if (!(await assertPayoutChannel(interaction))) return;
-
     const embed = new EmbedBuilder()
       .setTitle('Payout Bot Commands')
       .setColor(0x5865f2)
