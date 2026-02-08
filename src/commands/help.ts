@@ -32,6 +32,10 @@ export const help: Command = {
           value: 'Remove any user\'s payout by ID. (Admin only)',
         },
         {
+          name: '/timeout',
+          value: 'Timeout a user for 30 seconds (1-hour cooldown). Only works on users ranked below you — if they outrank you, it backfires!',
+        },
+        {
           name: '/help',
           value: 'Show this help message.',
         },
