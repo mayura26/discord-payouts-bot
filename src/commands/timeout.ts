@@ -2,11 +2,11 @@ import { SlashCommandBuilder, GuildMember, MessageFlags } from 'discord.js';
 import { Command } from '../types';
 import { config } from '../config';
 
-/** In-memory cooldown: userId → last usage timestamp */
+/** Per-victim cooldown: userId (person timed out) → last time they were timed out */
 const cooldowns = new Map<string, number>();
 
-const TIMEOUT_MS = 30_000;       // 30 seconds
-const COOLDOWN_MS = 60 * 60_000; // 1 hour
+const TIMEOUT_MS = 71_000;      // 1 min 11 sec
+const COOLDOWN_MS = 60 * 60_000; // 1 hour per person
 
 /** Returns the user's position rank (1 = highest, 10 = lowest) or null if unranked. */
 function getUserRank(member: GuildMember): number | null {
@@ -21,7 +21,7 @@ function getUserRank(member: GuildMember): number | null {
 export const timeout: Command = {
   data: new SlashCommandBuilder()
     .setName('timeout')
-    .setDescription('Timeout a user for 30 seconds (1-hour cooldown)')
+    .setDescription('Timeout a user for 1 minute 11 seconds (each person can only be timed out once per hour)')
     .addUserOption(option =>
       option.setName('user').setDescription('The user to timeout').setRequired(true),
     ),
@@ -38,17 +38,6 @@ export const timeout: Command = {
     // Block bots
     if (target.bot) {
       await interaction.reply({ content: 'You can\'t timeout a bot.', flags: MessageFlags.Ephemeral });
-      return;
-    }
-
-    // Check cooldown
-    const lastUsed = cooldowns.get(interaction.user.id);
-    if (lastUsed && Date.now() - lastUsed < COOLDOWN_MS) {
-      const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
-      await interaction.reply({
-        content: `You're on cooldown. Try again in **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.`,
-        flags: MessageFlags.Ephemeral,
-      });
       return;
     }
 
@@ -79,9 +68,22 @@ export const timeout: Command = {
     }
 
     const victim = backfire ? executorMember : targetMember;
+    const durationMs = backfire ? TIMEOUT_MS * 2 : TIMEOUT_MS;
+    const durationSec = durationMs / 1000;
+
+    // Per-person cooldown: each victim can only be timed out once per hour
+    const lastTimedOut = cooldowns.get(victim.id);
+    if (lastTimedOut && Date.now() - lastTimedOut < COOLDOWN_MS) {
+      const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastTimedOut)) / 60_000);
+      await interaction.reply({
+        content: `${victim.user} can only be timed out once per hour. Try again in **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
     try {
-      await victim.timeout(TIMEOUT_MS, 'Timeout command');
+      await victim.timeout(durationMs, 'Timeout command');
     } catch {
       await interaction.reply({
         content: `I don't have permission to timeout ${victim.user}.`,
@@ -90,16 +92,16 @@ export const timeout: Command = {
       return;
     }
 
-    // Set cooldown after successful action
-    cooldowns.set(interaction.user.id, Date.now());
+    // Set per-victim cooldown after successful action
+    cooldowns.set(victim.id, Date.now());
 
     if (backfire) {
       await interaction.reply(
-        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for 30 seconds!`,
+        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for ${durationSec} seconds!`,
       );
     } else {
       await interaction.reply(
-        `${target} has been timed out for 30 seconds by ${interaction.user}!`,
+        `${target} has been timed out for ${durationSec} seconds by ${interaction.user}!`,
       );
     }
   },

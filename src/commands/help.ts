@@ -33,7 +33,7 @@ export const help: Command = {
         },
         {
           name: '/timeout',
-          value: 'Timeout a user for 30 seconds (1-hour cooldown). Only works on users ranked below you — if they outrank you, it backfires!',
+          value: 'Timeout a user for 1 min 11 sec. Each person can only be timed out once per hour; you can timeout multiple people. Only works on users ranked below you — if they outrank you, it backfires (2 min 22 sec)!',
         },
         {
           name: '/help',
