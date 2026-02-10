@@ -7,6 +7,8 @@ import { leaderboard } from './leaderboard';
 import { mypayouts } from './mypayouts';
 import { help } from './help';
 import { timeout } from './timeout';
+import { timeoutstats } from './timeoutstats';
+import { timeoutleaderboard } from './timeoutleaderboard';
 
 export const commands = new Collection<string, Command>();
 
@@ -18,6 +20,8 @@ const commandList: Command[] = [
   mypayouts,
   help,
   timeout,
+  timeoutstats,
+  timeoutleaderboard,
 ];
 
 for (const command of commandList) {

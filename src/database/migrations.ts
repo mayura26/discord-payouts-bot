@@ -17,5 +17,18 @@ export function runMigrations(db: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_payouts_created
       ON payouts(created_at, removed);
+
+    CREATE TABLE IF NOT EXISTS timeouts (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id     TEXT    NOT NULL,
+      guild_id    TEXT    NOT NULL,
+      duration_ms INTEGER NOT NULL,
+      executor_id TEXT,
+      backfire    INTEGER NOT NULL DEFAULT 0,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_timeouts_user_guild
+      ON timeouts(user_id, guild_id, created_at);
   `);
 }

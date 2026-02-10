@@ -36,6 +36,14 @@ export const help: Command = {
           value: 'Timeout a user for 1 min 11 sec. You can\'t timeout the same person again for 1 hour (others can still timeout them).',
         },
         {
+          name: '/timeoutstats',
+          value: 'View your timeout stats or another user\'s (30-day rolling).',
+        },
+        {
+          name: '/timeoutleaderboard',
+          value: 'View top 10 users by total time timed out (30-day rolling).',
+        },
+        {
           name: '/help',
           value: 'Show this help message.',
         },

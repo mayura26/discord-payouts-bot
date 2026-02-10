@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, GuildMember, MessageFlags } from 'discord.js';
 import { Command } from '../types';
 import { config } from '../config';
+import { insertTimeout } from '../database/timeouts';
 
 /** Per (executor, target) pair: "executorId-targetId" → last time this executor timed out this target */
 const cooldowns = new Map<string, number>();
@@ -92,6 +93,8 @@ export const timeout: Command = {
       });
       return;
     }
+
+    insertTimeout(victim.id, guild.id, durationMs, interaction.user.id, backfire ? 1 : 0);
 
     // Set per (executor, target) cooldown after successful action
     cooldowns.set(pairKey, Date.now());
