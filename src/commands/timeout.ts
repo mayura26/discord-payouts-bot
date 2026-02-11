@@ -9,7 +9,7 @@ const cooldowns = new Map<string, number>();
 const TIMEOUT_MS = 71_000;      // 1 min 11 sec
 const COOLDOWN_MS = 60 * 60_000; // 1 hour per pair (you can't timeout the same person again for 1hr)
 
-/** Returns the user's position rank (1 = highest, 10 = lowest) or null if unranked. */
+/** Returns the user's position rank (1 = highest, 12 = lowest) or null if unranked. */
 function getUserRank(member: GuildMember): number | null {
   for (let i = 0; i < config.positionRoleIds.length; i++) {
     if (member.roles.cache.has(config.positionRoleIds[i])) {

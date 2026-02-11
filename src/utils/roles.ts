@@ -6,7 +6,7 @@ export function getPositionRoleId(position: number): string {
   return config.positionRoleIds[position - 1];
 }
 
-/** Verify all 10 position roles exist in the guild. Logs warnings for missing roles. */
+/** Verify all 12 position roles exist in the guild. Logs warnings for missing roles. */
 export async function verifyRolesExist(guild: Guild): Promise<void> {
   for (let i = 0; i < config.positionRoleIds.length; i++) {
     const roleId = config.positionRoleIds[i];

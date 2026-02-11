@@ -25,7 +25,7 @@ export const help: Command = {
         },
         {
           name: '/leaderboard',
-          value: 'View the top 10 payout rankings (30-day rolling).',
+          value: 'View the top 12 payout rankings (30-day rolling).',
         },
         {
           name: '/adminremovepayout',

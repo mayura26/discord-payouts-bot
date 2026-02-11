@@ -8,11 +8,11 @@ const MEDAL_EMOJIS = ['🥇', '🥈', '🥉'];
 export const leaderboard: Command = {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription('View the top 10 payout rankings (30-day rolling)'),
+    .setDescription('View the top 12 payout rankings (30-day rolling)'),
 
   async execute(interaction) {
     const guildId = interaction.guildId!;
-    const topUsers = getTopUsers(guildId, 10);
+    const topUsers = getTopUsers(guildId, 12);
 
     if (topUsers.length === 0) {
       await interaction.reply({

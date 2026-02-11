@@ -10,7 +10,7 @@ function requireEnv(name: string): string {
 }
 
 const positionRoleIds: string[] = [];
-for (let i = 1; i <= 10; i++) {
+for (let i = 1; i <= 12; i++) {
   positionRoleIds.push(requireEnv(`ROLE_POSITION_${i}`));
 }
 

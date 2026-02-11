@@ -30,7 +30,7 @@ export async function triggerRankingRecalculation(guild: Guild): Promise<void> {
 }
 
 async function recalculateRankings(guild: Guild): Promise<void> {
-  const topUsers = getTopUsers(guild.id, 10);
+  const topUsers = getTopUsers(guild.id, 12);
 
   // Map of userId -> desired role ID
   const desiredRoles = new Map<string, string>();
@@ -74,7 +74,7 @@ async function recalculateRankings(guild: Guild): Promise<void> {
     currentHolders.delete(userId);
   }
 
-  // Users who should NOT have any position role (no longer in top 10)
+  // Users who should NOT have any position role (no longer in top 12)
   for (const [userId, currentRoles] of currentHolders) {
     if (currentRoles.size > 0) {
       roleChanges.push({ userId, add: [], remove: [...currentRoles] });
