@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { Client } from 'discord.js';
 import { config } from '../config';
+import { runBackup } from '../database/backup';
 import { triggerRankingRecalculation } from './ranking';
 
 export function startScheduler(client: Client): void {
@@ -17,5 +18,16 @@ export function startScheduler(client: Client): void {
     }
   });
 
+  cron.schedule(config.backupCron, async () => {
+    console.log('[Scheduler] Running daily database backup...');
+    try {
+      await runBackup();
+      console.log('[Scheduler] Database backup complete.');
+    } catch (error) {
+      console.error('[Scheduler] Database backup failed:', error);
+    }
+  });
+
   console.log(`[Scheduler] Daily ranking recalculation scheduled: ${config.rankingCron}`);
+  console.log(`[Scheduler] Daily database backup scheduled: ${config.backupCron}`);
 }

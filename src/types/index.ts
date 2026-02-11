@@ -36,4 +36,6 @@ export interface BotConfig {
   positionRoleIds: string[];
   databasePath: string;
   rankingCron: string;
+  backupCron: string;
+  backupRetentionDays: number;
 }
