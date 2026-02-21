@@ -25,10 +25,14 @@ export const timeout: Command = {
     .setDescription('Timeout a user for 1 minute 11 seconds (you can\'t timeout the same person again for 1 hour)')
     .addUserOption(option =>
       option.setName('user').setDescription('The user to timeout').setRequired(true),
+    )
+    .addStringOption(option =>
+      option.setName('message').setDescription('Optional reason or message for the timeout').setRequired(false),
     ),
 
   async execute(interaction) {
     const target = interaction.options.getUser('user', true);
+    const message = interaction.options.getString('message') ?? undefined;
 
     // Block self-targeting
     if (target.id === interaction.user.id) {
@@ -85,7 +89,7 @@ export const timeout: Command = {
     }
 
     try {
-      await victim.timeout(durationMs, 'Timeout command');
+      await victim.timeout(durationMs, message || 'Timeout command');
     } catch {
       await interaction.reply({
         content: `I don't have permission to timeout ${victim.user}.`,
@@ -101,11 +105,11 @@ export const timeout: Command = {
 
     if (backfire) {
       await interaction.reply(
-        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for ${durationSec} seconds!`,
+        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for ${durationSec} seconds!${message ? ` Reason: ${message}` : ''}`,
       );
     } else {
       await interaction.reply(
-        `${target} has been timed out for ${durationSec} seconds by ${interaction.user}!`,
+        `${target} has been timed out for ${durationSec} seconds by ${interaction.user}!${message ? ` Reason: ${message}` : ''}`,
       );
     }
   },
