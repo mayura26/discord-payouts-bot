@@ -6,6 +6,9 @@ import { insertTimeout } from '../database/timeouts';
 /** Per (executor, target) pair: "executorId-targetId" → last time this executor timed out this target */
 const cooldowns = new Map<string, number>();
 
+/** Per (executor, target): count of "again too soon" hits in current cooldown window */
+const cooldownFailAttempts = new Map<string, number>();
+
 const TIMEOUT_MS = 71_000;      // 1 min 11 sec
 const COOLDOWN_MS = 60 * 60_000; // 1 hour per pair (you can't timeout the same person again for 1hr)
 
@@ -116,6 +119,12 @@ export const timeout: Command = {
     const pairKey = `${interaction.user.id}-${target.id}`;
     const lastUsed = cooldowns.get(pairKey);
     const onCooldown = lastUsed && Date.now() - lastUsed < COOLDOWN_MS;
+
+    // Reset fail attempts when cooldown expires (new window)
+    if (!onCooldown) {
+      cooldownFailAttempts.delete(pairKey);
+    }
+
     let cooldownRollFeedback: string | null = null;
     if (onCooldown) {
       let cooldownBypassed = false;
@@ -135,8 +144,31 @@ export const timeout: Command = {
         cooldownRollFeedback = rollFeedback(roll, threshold);
       }
       if (!cooldownBypassed) {
+        const attempts = cooldownFailAttempts.get(pairKey) ?? 0;
+        const backfireChance = attempts === 0 ? 0 : Math.min(config.timeoutBackfireCap, attempts * config.timeoutBackfireIncrement);
+        let spamBackfireFeedback: string | null = null;
+
+        if (backfireChance > 0) {
+          const { success, roll, threshold } = rollWithFeedback(backfireChance);
+          spamBackfireFeedback = rollFeedback(roll, threshold);
+          if (success) {
+            try {
+              await executorMember.timeout(TIMEOUT_MS * 2, message || 'Timeout command - spam backfire');
+              cooldownFailAttempts.delete(pairKey);
+              insertTimeout(executorMember.id, guild.id, TIMEOUT_MS * 2, interaction.user.id, 1);
+              await interaction.reply(
+                `${interaction.user} tried to timeout ${target} again too soon and it backfired! ${interaction.user} has been timed out for ${(TIMEOUT_MS * 2) / 1000} seconds!${spamBackfireFeedback}${message ? ` Reason: ${message}` : ''}`,
+              );
+              return;
+            } catch {
+              // Bot can't timeout executor, fall through to "again too soon"
+            }
+          }
+        }
+
+        cooldownFailAttempts.set(pairKey, attempts + 1);
         const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
-        const feedback = cooldownRollFeedback ?? '';
+        const feedback = (cooldownRollFeedback ?? '') + (spamBackfireFeedback ?? '');
         await interaction.reply({
           content: `${interaction.user} tried to timeout ${target} again too soon! Can't timeout them for **${remainingMin}** more minute${remainingMin === 1 ? '' : 's'}.${feedback}`,
         });

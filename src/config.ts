@@ -39,4 +39,6 @@ export const config: BotConfig = Object.freeze({
   timeoutChanceDiff10: parseNumEnv('TIMEOUT_CHANCE_DIFF_10', 1),
   timeoutChanceDiff12: parseNumEnv('TIMEOUT_CHANCE_DIFF_12', 0.1),
   timeoutUnrankedRank: parseNumEnv('TIMEOUT_UNRANKED_RANK', 13),
+  timeoutBackfireIncrement: parseNumEnv('TIMEOUT_BACKFIRE_INCREMENT', 10),
+  timeoutBackfireCap: parseNumEnv('TIMEOUT_BACKFIRE_CAP', 80),
 });

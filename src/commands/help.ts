@@ -33,7 +33,7 @@ export const help: Command = {
         },
         {
           name: '/timeout',
-          value: 'Timeout a user for 1 min 11 sec. Timing out someone above your rank has a % chance to succeed (based on rank diff); otherwise it backfires. Higher ranks can override the 1hr cooldown with a % chance.',
+          value: 'Timeout a user for 1 min 11 sec. Timing out someone above your rank has a % chance to succeed (based on rank diff); otherwise it backfires. Higher ranks can override the 1hr cooldown with a % chance. Spamming timeout while on cooldown increases the chance it backfires on you.',
         },
         {
           name: '/timeoutstats',

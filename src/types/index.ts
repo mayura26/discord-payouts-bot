@@ -46,4 +46,8 @@ export interface BotConfig {
   timeoutChanceDiff12: number;
   /** Effective rank for unranked users (below rank 12) */
   timeoutUnrankedRank: number;
+  /** % added per cooldown spam attempt (first attempt = 0%, then scales) */
+  timeoutBackfireIncrement: number;
+  /** Max % backfire chance when spamming cooldown */
+  timeoutBackfireCap: number;
 }
