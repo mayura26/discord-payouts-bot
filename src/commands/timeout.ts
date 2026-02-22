@@ -148,8 +148,10 @@ export const timeout: Command = {
 
     insertTimeout(victim.id, guild.id, durationMs, interaction.user.id, backfire ? 1 : 0);
 
-    // Set per (executor, target) cooldown after successful action
-    cooldowns.set(pairKey, Date.now());
+    // Set cooldown only when target was successfully timed out (not on backfire)
+    if (!backfire) {
+      cooldowns.set(pairKey, Date.now());
+    }
 
     const feedbackSuffix = [rankRollFeedback, cooldownRollFeedback].filter(Boolean).join(' ');
 
