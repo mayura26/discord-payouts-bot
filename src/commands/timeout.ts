@@ -28,6 +28,19 @@ function getTimeoutSuccessChance(rankDiff: number, c: BotConfig): number {
   return y0 + t * (y1 - y0);
 }
 
+const ROLL_MAX = 1000; // 1-1000 scale for probability feedback
+
+/** Roll 1-1000, succeed if roll <= threshold. Returns { success, roll, threshold } for feedback. */
+function rollWithFeedback(successChancePercent: number): { success: boolean; roll: number; threshold: number } {
+  const roll = Math.floor(Math.random() * ROLL_MAX) + 1;
+  const threshold = Math.round((successChancePercent / 100) * ROLL_MAX);
+  return { success: roll <= threshold, roll, threshold };
+}
+
+function rollFeedback(roll: number, threshold: number): string {
+  return ` (Roll: ${roll}/${ROLL_MAX}, needed ≤${threshold})`;
+}
+
 /** Returns the user's position rank (1 = highest, 12 = lowest) or null if unranked. */
 function getUserRank(member: GuildMember): number | null {
   for (let i = 0; i < config.positionRoleIds.length; i++) {
@@ -77,6 +90,7 @@ export const timeout: Command = {
 
     // Determine who gets timed out
     let backfire = false;
+    let rankRollFeedback: string | null = null;
     if (targetRank === null) {
       // Target unranked, executor ranked → always timeout target
       backfire = false;
@@ -88,7 +102,9 @@ export const timeout: Command = {
       const executorEffective = executorRank ?? config.timeoutUnrankedRank;
       const rankDiff = executorEffective - targetRank;
       const successChance = getTimeoutSuccessChance(rankDiff, config);
-      backfire = Math.random() * 100 >= successChance;
+      const { success, roll, threshold } = rollWithFeedback(successChance);
+      backfire = !success;
+      rankRollFeedback = rollFeedback(roll, threshold);
     }
 
     const victim = backfire ? executorMember : targetMember;
@@ -100,17 +116,21 @@ export const timeout: Command = {
     const pairKey = `${interaction.user.id}-${target.id}`;
     const lastUsed = cooldowns.get(pairKey);
     const onCooldown = lastUsed && Date.now() - lastUsed < COOLDOWN_MS;
+    let cooldownRollFeedback: string | null = null;
     if (onCooldown) {
       let cooldownBypassed = false;
       if (targetRank !== null && executorRank !== null && executorRank < targetRank) {
         const overrideRankDiff = targetRank - executorRank; // positive when executor higher
         const overrideChance = getTimeoutSuccessChance(12 - overrideRankDiff, config);
-        cooldownBypassed = Math.random() * 100 < overrideChance;
+        const { success, roll, threshold } = rollWithFeedback(overrideChance);
+        cooldownBypassed = success;
+        cooldownRollFeedback = rollFeedback(roll, threshold);
       }
       if (!cooldownBypassed) {
         const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
+        const feedback = cooldownRollFeedback ?? '';
         await interaction.reply({
-          content: `You can't timeout ${target} again for **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.`,
+          content: `You can't timeout ${target} again for **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.${feedback}`,
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -132,13 +152,15 @@ export const timeout: Command = {
     // Set per (executor, target) cooldown after successful action
     cooldowns.set(pairKey, Date.now());
 
+    const feedbackSuffix = [rankRollFeedback, cooldownRollFeedback].filter(Boolean).join(' ');
+
     if (backfire) {
       await interaction.reply(
-        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for ${durationSec} seconds!${message ? ` Reason: ${message}` : ''}`,
+        `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} has been timed out for ${durationSec} seconds!${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
       );
     } else {
       await interaction.reply(
-        `${target} has been timed out for ${durationSec} seconds by ${interaction.user}!${message ? ` Reason: ${message}` : ''}`,
+        `${target} has been timed out for ${durationSec} seconds by ${interaction.user}!${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
       );
     }
   },
