@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, GuildMember, MessageFlags } from 'discord.js';
-import { Command } from '../types';
+import { Command, type BotConfig } from '../types';
 import { config } from '../config';
 import { insertTimeout } from '../database/timeouts';
 
@@ -8,6 +8,25 @@ const cooldowns = new Map<string, number>();
 
 const TIMEOUT_MS = 71_000;      // 1 min 11 sec
 const COOLDOWN_MS = 60 * 60_000; // 1 hour per pair (you can't timeout the same person again for 1hr)
+
+/** Piecewise linear: anchors at diff 1, 3, 5, 10, 12. Returns % success chance (0–100). */
+function getTimeoutSuccessChance(rankDiff: number, c: BotConfig): number {
+  const anchors: [number, number][] = [
+    [1, c.timeoutChanceDiff1],
+    [3, c.timeoutChanceDiff3],
+    [5, c.timeoutChanceDiff5],
+    [10, c.timeoutChanceDiff10],
+    [12, c.timeoutChanceDiff12],
+  ];
+  const d = Math.max(1, Math.min(12, Math.round(rankDiff)));
+  let i = 0;
+  while (i < anchors.length - 1 && anchors[i + 1][0] < d) i++;
+  const [x0, y0] = anchors[i];
+  const [x1, y1] = anchors[i + 1];
+  if (x0 === x1) return y0;
+  const t = (d - x0) / (x1 - x0);
+  return y0 + t * (y1 - y0);
+}
 
 /** Returns the user's position rank (1 = highest, 12 = lowest) or null if unranked. */
 function getUserRank(member: GuildMember): number | null {
@@ -58,18 +77,18 @@ export const timeout: Command = {
 
     // Determine who gets timed out
     let backfire = false;
-    if (executorRank === null) {
-      // No rank → always backfires
-      backfire = true;
-    } else if (targetRank === null) {
-      // Target unranked, executor ranked → timeout target
+    if (targetRank === null) {
+      // Target unranked, executor ranked → always timeout target
       backfire = false;
-    } else if (executorRank < targetRank) {
-      // Lower number = higher rank → timeout target
+    } else if (executorRank !== null && executorRank < targetRank) {
+      // Executor higher rank than target → always timeout target
       backfire = false;
     } else {
-      // Target is same rank or higher → backfire
-      backfire = true;
+      // Target same rank or higher (or executor unranked) → % chance based on rank diff
+      const executorEffective = executorRank ?? config.timeoutUnrankedRank;
+      const rankDiff = executorEffective - targetRank;
+      const successChance = getTimeoutSuccessChance(rankDiff, config);
+      backfire = Math.random() * 100 >= successChance;
     }
 
     const victim = backfire ? executorMember : targetMember;

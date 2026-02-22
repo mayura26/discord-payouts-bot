@@ -38,4 +38,12 @@ export interface BotConfig {
   rankingCron: string;
   backupCron: string;
   backupRetentionDays: number;
+  /** Timeout success chance anchors: % at rank diff 1, 3, 5, 10, 12 */
+  timeoutChanceDiff1: number;
+  timeoutChanceDiff3: number;
+  timeoutChanceDiff5: number;
+  timeoutChanceDiff10: number;
+  timeoutChanceDiff12: number;
+  /** Effective rank for unranked users (below rank 12) */
+  timeoutUnrankedRank: number;
 }
