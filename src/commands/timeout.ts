@@ -125,6 +125,14 @@ export const timeout: Command = {
         const { success, roll, threshold } = rollWithFeedback(overrideChance);
         cooldownBypassed = success;
         cooldownRollFeedback = rollFeedback(roll, threshold);
+      } else if (targetRank === null) {
+        // Target unranked - give executor a chance to bypass cooldown (treat unranked as rank 13)
+        const executorEffective = executorRank ?? config.timeoutUnrankedRank;
+        const overrideRankDiff = config.timeoutUnrankedRank - executorEffective; // positive when executor ranked higher
+        const overrideChance = getTimeoutSuccessChance(Math.max(1, 12 - overrideRankDiff), config);
+        const { success, roll, threshold } = rollWithFeedback(overrideChance);
+        cooldownBypassed = success;
+        cooldownRollFeedback = rollFeedback(roll, threshold);
       }
       if (!cooldownBypassed) {
         const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
