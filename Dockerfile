@@ -18,5 +18,5 @@ RUN npm run build
 # Create data directory for SQLite database
 RUN mkdir -p /app/data
 
-# Run the bot
-CMD ["npm", "start"]
+# Deploy slash commands, then run the bot
+CMD ["sh", "-c", "node dist/deploy-commands.js && npm start"]
