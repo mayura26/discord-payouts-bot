@@ -130,8 +130,7 @@ export const timeout: Command = {
         const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
         const feedback = cooldownRollFeedback ?? '';
         await interaction.reply({
-          content: `You can't timeout ${target} again for **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.${feedback}`,
-          flags: MessageFlags.Ephemeral,
+          content: `${interaction.user} tried to timeout ${target} again too soon! Can't timeout them for **${remainingMin}** more minute${remainingMin === 1 ? '' : 's'}.${feedback}`,
         });
         return;
       }
