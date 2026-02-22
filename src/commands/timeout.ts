@@ -161,7 +161,10 @@ export const timeout: Command = {
               );
               return;
             } catch {
-              // Bot can't timeout executor, fall through to "again too soon"
+              await interaction.reply(
+                `${interaction.user} tried to timeout ${target} again too soon and it backfired! ${interaction.user} should have been timed out for ${(TIMEOUT_MS * 2) / 1000} seconds, but I don't have permission to timeout them — Discord is rigged.${spamBackfireFeedback}${message ? ` Reason: ${message}` : ''}`,
+              );
+              return;
             }
           }
         }
@@ -176,13 +179,20 @@ export const timeout: Command = {
       }
     }
 
+    const feedbackSuffix = [rankRollFeedback, cooldownRollFeedback].filter(Boolean).join(' ');
+
     try {
       await victim.timeout(durationMs, message || 'Timeout command');
     } catch {
-      await interaction.reply({
-        content: `I don't have permission to timeout ${victim.user}.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      if (backfire) {
+        await interaction.reply(
+          `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} should have been timed out for ${durationSec} seconds, but I don't have permission to timeout them — Discord is rigged.${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
+        );
+      } else {
+        await interaction.reply(
+          `${target} should have been timed out for ${durationSec} seconds by ${interaction.user}, but I don't have permission to timeout them — Discord is rigged.${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
+        );
+      }
       return;
     }
 
@@ -192,8 +202,6 @@ export const timeout: Command = {
     if (!backfire) {
       cooldowns.set(pairKey, Date.now());
     }
-
-    const feedbackSuffix = [rankRollFeedback, cooldownRollFeedback].filter(Boolean).join(' ');
 
     if (backfire) {
       await interaction.reply(
