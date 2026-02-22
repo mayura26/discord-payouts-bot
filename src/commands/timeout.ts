@@ -96,15 +96,25 @@ export const timeout: Command = {
     const durationSec = durationMs / 1000;
 
     // Per (executor, target) cooldown: you can't timeout the same person again for 1 hour
+    // Higher-ranked executors can override with % chance (inverted curve: 12 ranks above = 25%, 1 above = 0.1%)
     const pairKey = `${interaction.user.id}-${target.id}`;
     const lastUsed = cooldowns.get(pairKey);
-    if (lastUsed && Date.now() - lastUsed < COOLDOWN_MS) {
-      const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
-      await interaction.reply({
-        content: `You can't timeout ${target} again for **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.`,
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
+    const onCooldown = lastUsed && Date.now() - lastUsed < COOLDOWN_MS;
+    if (onCooldown) {
+      let cooldownBypassed = false;
+      if (targetRank !== null && executorRank !== null && executorRank < targetRank) {
+        const overrideRankDiff = targetRank - executorRank; // positive when executor higher
+        const overrideChance = getTimeoutSuccessChance(12 - overrideRankDiff, config);
+        cooldownBypassed = Math.random() * 100 < overrideChance;
+      }
+      if (!cooldownBypassed) {
+        const remainingMin = Math.ceil((COOLDOWN_MS - (Date.now() - lastUsed)) / 60_000);
+        await interaction.reply({
+          content: `You can't timeout ${target} again for **${remainingMin}** minute${remainingMin === 1 ? '' : 's'}.`,
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
     }
 
     try {
