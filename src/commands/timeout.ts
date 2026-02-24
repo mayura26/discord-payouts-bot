@@ -9,6 +9,9 @@ const cooldowns = new Map<string, number>();
 /** Per (executor, target): count of "again too soon" hits in current cooldown window */
 const cooldownFailAttempts = new Map<string, number>();
 
+/** Per (guild, executor): "guildId-userId" → endTime (timestamp). Used when backfire would time out executor but API fails (e.g. admin). */
+const softTimeouts = new Map<string, number>();
+
 const TIMEOUT_MS = 71_000;      // 1 min 11 sec
 const COOLDOWN_MS = 60 * 60_000; // 1 hour per pair (you can't timeout the same person again for 1hr)
 
@@ -83,6 +86,20 @@ export const timeout: Command = {
 
     const guild = interaction.guild;
     if (!guild) return;
+
+    const softKey = `${guild.id}-${interaction.user.id}`;
+    const softEnd = softTimeouts.get(softKey);
+    if (softEnd !== undefined) {
+      if (Date.now() < softEnd) {
+        const remainingSec = Math.ceil((softEnd - Date.now()) / 1000);
+        await interaction.reply({
+          content: `You're in a timeout period and can't use the timeout command for ${remainingSec} more second${remainingSec === 1 ? '' : 's'}.`,
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
+      }
+      softTimeouts.delete(softKey);
+    }
 
     // Fetch both members
     const executorMember = await guild.members.fetch(interaction.user.id);
@@ -161,8 +178,11 @@ export const timeout: Command = {
               );
               return;
             } catch {
+              const spamSoftDurationMs = TIMEOUT_MS * 2;
+              softTimeouts.set(softKey, Date.now() + spamSoftDurationMs);
+              const spamSoftSec = spamSoftDurationMs / 1000;
               await interaction.reply(
-                `${interaction.user} tried to timeout ${target} again too soon and it backfired! ${interaction.user} should have been timed out for ${(TIMEOUT_MS * 2) / 1000} seconds, but I don't have permission to timeout them — Discord is rigged.${spamBackfireFeedback}${message ? ` Reason: ${message}` : ''}`,
+                `${interaction.user} tried to timeout ${target} again too soon and it backfired! ${interaction.user} should have been timed out for ${(TIMEOUT_MS * 2) / 1000} seconds, but I don't have permission to timeout them — Discord is rigged. You're in a timeout period for the next ${spamSoftSec} seconds and can't use the timeout command until it expires.${spamBackfireFeedback}${message ? ` Reason: ${message}` : ''}`,
               );
               return;
             }
@@ -185,8 +205,9 @@ export const timeout: Command = {
       await victim.timeout(durationMs, message || 'Timeout command');
     } catch {
       if (backfire) {
+        softTimeouts.set(softKey, Date.now() + durationMs);
         await interaction.reply(
-          `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} should have been timed out for ${durationSec} seconds, but I don't have permission to timeout them — Discord is rigged.${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
+          `${interaction.user} tried to timeout ${target} but it backfired! ${interaction.user} should have been timed out for ${durationSec} seconds, but I don't have permission to timeout them — Discord is rigged. You're in a timeout period for the next ${durationSec} seconds and can't use the timeout command until it expires.${feedbackSuffix}${message ? ` Reason: ${message}` : ''}`,
         );
       } else {
         await interaction.reply(
