@@ -112,8 +112,13 @@ export const timeout: Command = {
     let backfire = false;
     let rankRollFeedback: string | null = null;
     if (targetRank === null) {
-      // Target unranked, executor ranked → always timeout target
-      backfire = false;
+      if (executorRank === null) {
+        // Unranked timing out unranked → always backfire on executor
+        backfire = true;
+      } else {
+        // Target unranked, executor ranked → always timeout target
+        backfire = false;
+      }
     } else if (executorRank !== null && executorRank < targetRank) {
       // Executor higher rank than target → always timeout target
       backfire = false;
