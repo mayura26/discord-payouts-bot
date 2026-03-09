@@ -28,7 +28,7 @@ export const config: BotConfig = Object.freeze({
   payoutChannelId: requireEnv('PAYOUT_CHANNEL_ID'),
   positionRoleIds,
   databasePath: process.env.DATABASE_PATH || './data/payouts.db',
-  rankingCron: process.env.RANKING_CRON || '0 0 * * *',
+  rankingCron: process.env.RANKING_CRON || '0 * * * *',
   backupCron: process.env.BACKUP_CRON || '0 1 * * *',
   backupRetentionDays: process.env.BACKUP_RETENTION_DAYS
     ? parseInt(process.env.BACKUP_RETENTION_DAYS, 10)

@@ -7,7 +7,7 @@ import { announceRolloffs } from './rolloffAnnouncements';
 
 export function startScheduler(client: Client): void {
   cron.schedule(config.rankingCron, async () => {
-    console.log('[Scheduler] Running daily ranking recalculation...');
+    console.log('[Scheduler] Running ranking recalculation...');
     try {
       const guild = await client.guilds.fetch(config.guildId);
       await guild.members.fetch();
@@ -30,6 +30,6 @@ export function startScheduler(client: Client): void {
     }
   });
 
-  console.log(`[Scheduler] Daily ranking recalculation scheduled: ${config.rankingCron}`);
+  console.log(`[Scheduler] Ranking recalculation scheduled: ${config.rankingCron}`);
   console.log(`[Scheduler] Daily database backup scheduled: ${config.backupCron}`);
 }
