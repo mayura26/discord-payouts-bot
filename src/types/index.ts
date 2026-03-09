@@ -19,6 +19,7 @@ export interface PayoutRow {
   proof_url: string;
   created_at: string;
   removed: number;
+  rolloff_announced: number;
 }
 
 /** A user with their ranked total */

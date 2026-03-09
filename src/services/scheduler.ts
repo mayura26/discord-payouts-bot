@@ -3,6 +3,7 @@ import { Client } from 'discord.js';
 import { config } from '../config';
 import { runBackup } from '../database/backup';
 import { triggerRankingRecalculation } from './ranking';
+import { announceRolloffs } from './rolloffAnnouncements';
 
 export function startScheduler(client: Client): void {
   cron.schedule(config.rankingCron, async () => {
@@ -13,6 +14,7 @@ export function startScheduler(client: Client): void {
       await guild.roles.fetch();
       await triggerRankingRecalculation(guild);
       console.log('[Scheduler] Ranking recalculation complete.');
+      await announceRolloffs(client);
     } catch (error) {
       console.error('[Scheduler] Ranking recalculation failed:', error);
     }

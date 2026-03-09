@@ -31,4 +31,11 @@ export function runMigrations(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_timeouts_user_guild
       ON timeouts(user_id, guild_id, created_at);
   `);
+
+  // Add rolloff_announced column if missing (existing DBs)
+  const tableInfo = db.prepare('PRAGMA table_info(payouts)').all() as Array<{ name: string }>;
+  const hasRolloffAnnounced = tableInfo.some(col => col.name === 'rolloff_announced');
+  if (!hasRolloffAnnounced) {
+    db.exec(`ALTER TABLE payouts ADD COLUMN rolloff_announced INTEGER NOT NULL DEFAULT 0`);
+  }
 }

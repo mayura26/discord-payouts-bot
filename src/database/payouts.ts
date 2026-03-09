@@ -52,6 +52,17 @@ const getNextRolloffsStmt = db.prepare(`
   LIMIT ?
 `);
 
+const getRolledOffUnannouncedStmt = db.prepare(`
+  SELECT * FROM payouts
+  WHERE guild_id = ? AND removed = 0 AND rolloff_announced = 0
+    AND created_at < datetime('now', '-30 days')
+  ORDER BY created_at ASC
+`);
+
+const markRolloffAnnouncedStmt = db.prepare(`
+  UPDATE payouts SET rolloff_announced = 1 WHERE id = ?
+`);
+
 /** Insert a new payout. Returns the new row's id. */
 export function insertPayout(userId: string, guildId: string, amount: number, proofUrl: string): number {
   const result = insertStmt.run(userId, guildId, amount, proofUrl);
@@ -94,4 +105,14 @@ export function getTopUsers(guildId: string, limit: number = 10): RankedUser[] {
 /** Get the next N payouts that will roll off the 30-day window (oldest first). */
 export function getNextRolloffs(guildId: string, limit: number): PayoutRow[] {
   return getNextRolloffsStmt.all(guildId, limit) as PayoutRow[];
+}
+
+/** Get payouts that have rolled off the 30-day window and not yet been announced. */
+export function getRolledOffUnannounced(guildId: string): PayoutRow[] {
+  return getRolledOffUnannouncedStmt.all(guildId) as PayoutRow[];
+}
+
+/** Mark a payout's roll-off as announced. */
+export function markRolloffAnnounced(payoutId: number): void {
+  markRolloffAnnouncedStmt.run(payoutId);
 }
