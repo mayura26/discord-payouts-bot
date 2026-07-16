@@ -28,6 +28,10 @@ export const help: Command = {
           value: 'View the top 12 payout rankings (30-day rolling).',
         },
         {
+          name: '/historicalleaderboard',
+          value: 'View the top 12 all-time payout rankings.',
+        },
+        {
           name: '/rolloffs',
           value: 'Show the next 3 payouts that will roll off the 30-day window (all users).',
         },

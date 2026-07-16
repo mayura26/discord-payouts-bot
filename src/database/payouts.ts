@@ -44,6 +44,15 @@ const getTopUsersStmt = db.prepare(`
   LIMIT ?
 `);
 
+const getTopUsersAllTimeStmt = db.prepare(`
+  SELECT user_id, SUM(amount) AS total_amount
+  FROM payouts
+  WHERE guild_id = ? AND removed = 0
+  GROUP BY user_id
+  ORDER BY total_amount DESC, MIN(created_at) ASC
+  LIMIT ?
+`);
+
 const getNextRolloffsStmt = db.prepare(`
   SELECT * FROM payouts
   WHERE guild_id = ? AND removed = 0
@@ -100,6 +109,11 @@ export function getUserTotal(userId: string, guildId: string): number {
 /** Get the top N users by 30-day total. */
 export function getTopUsers(guildId: string, limit: number = 10): RankedUser[] {
   return getTopUsersStmt.all(guildId, limit) as RankedUser[];
+}
+
+/** Get the top N users by all-time total. */
+export function getTopUsersAllTime(guildId: string, limit: number = 10): RankedUser[] {
+  return getTopUsersAllTimeStmt.all(guildId, limit) as RankedUser[];
 }
 
 /** Get the next N payouts that will roll off the 30-day window (oldest first). */

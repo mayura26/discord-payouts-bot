@@ -4,6 +4,7 @@ import { addpayout } from './addpayout';
 import { removepayout } from './removepayout';
 import { adminremovepayout } from './adminremovepayout';
 import { leaderboard } from './leaderboard';
+import { historicalleaderboard } from './historicalleaderboard';
 import { mypayouts } from './mypayouts';
 import { rolloffs } from './rolloffs';
 import { help } from './help';
@@ -18,6 +19,7 @@ const commandList: Command[] = [
   removepayout,
   adminremovepayout,
   leaderboard,
+  historicalleaderboard,
   mypayouts,
   rolloffs,
   help,
