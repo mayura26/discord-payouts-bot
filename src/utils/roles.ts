@@ -1,6 +1,15 @@
 import { Guild } from 'discord.js';
 import { config } from '../config';
 
+/**
+ * Map a dense leaderboard place (0-based) onto a 0-based color slot index.
+ * Spreads n people evenly across 12 slots (first → 0, last → 11 when n > 1).
+ */
+export function spreadSlotIndex(placeIndex: number, count: number): number {
+  if (count <= 1) return 0;
+  return Math.round((placeIndex * 11) / (count - 1));
+}
+
 /** Get the role ID for a given position (1-indexed). */
 export function getPositionRoleId(position: number): string {
   return config.positionRoleIds[position - 1];

@@ -1,6 +1,7 @@
 import { Guild } from 'discord.js';
 import { config } from '../config';
 import { getTopUsers } from '../database/payouts';
+import { spreadSlotIndex } from '../utils/roles';
 
 let rankingInProgress = false;
 let rankingQueued = false;
@@ -32,10 +33,13 @@ export async function triggerRankingRecalculation(guild: Guild): Promise<void> {
 async function recalculateRankings(guild: Guild): Promise<void> {
   const topUsers = getTopUsers(guild.id, 12);
 
-  // Map of userId -> desired role ID
+  // Map of userId -> desired role ID (colors spread across 12 slots when n < 12)
   const desiredRoles = new Map<string, string>();
   for (let i = 0; i < topUsers.length; i++) {
-    desiredRoles.set(topUsers[i].user_id, config.positionRoleIds[i]);
+    desiredRoles.set(
+      topUsers[i].user_id,
+      config.positionRoleIds[spreadSlotIndex(i, topUsers.length)],
+    );
   }
 
   const allPositionRoleIds = new Set(config.positionRoleIds);

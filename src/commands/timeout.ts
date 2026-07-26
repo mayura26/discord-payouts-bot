@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, GuildMember, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { Command, type BotConfig } from '../types';
 import { config } from '../config';
+import { getTopUsers } from '../database/payouts';
 import { insertTimeout } from '../database/timeouts';
 
 /** Per (executor, target) pair: "executorId-targetId" → last time this executor timed out this target */
@@ -47,14 +48,10 @@ function rollFeedback(roll: number, threshold: number): string {
   return ` (Roll: ${roll}/${ROLL_MAX}, needed ≤${threshold})`;
 }
 
-/** Returns the user's position rank (1 = highest, 12 = lowest) or null if unranked. */
-function getUserRank(member: GuildMember): number | null {
-  for (let i = 0; i < config.positionRoleIds.length; i++) {
-    if (member.roles.cache.has(config.positionRoleIds[i])) {
-      return i + 1;
-    }
-  }
-  return null;
+/** Returns the user's dense leaderboard place (1 = highest) or null if unranked. */
+function getUserRank(userId: string, topUsers: { user_id: string }[]): number | null {
+  const index = topUsers.findIndex(u => u.user_id === userId);
+  return index >= 0 ? index + 1 : null;
 }
 
 export const timeout: Command = {
@@ -105,8 +102,9 @@ export const timeout: Command = {
     const executorMember = await guild.members.fetch(interaction.user.id);
     const targetMember = await guild.members.fetch(target.id);
 
-    const executorRank = getUserRank(executorMember);
-    const targetRank = getUserRank(targetMember);
+    const topUsers = getTopUsers(guild.id, 12);
+    const executorRank = getUserRank(interaction.user.id, topUsers);
+    const targetRank = getUserRank(target.id, topUsers);
 
     // Determine who gets timed out
     let backfire = false;
