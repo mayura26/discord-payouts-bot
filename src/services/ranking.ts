@@ -33,7 +33,7 @@ export async function triggerRankingRecalculation(guild: Guild): Promise<void> {
 async function recalculateRankings(guild: Guild): Promise<void> {
   const topUsers = getTopUsers(guild.id, 12);
 
-  // Map of userId -> desired role ID (colors spread across 12 slots when n < 12)
+  // Map of userId -> desired role ID (spread across slots 1–11 when n < 12)
   const desiredRoles = new Map<string, string>();
   for (let i = 0; i < topUsers.length; i++) {
     desiredRoles.set(
