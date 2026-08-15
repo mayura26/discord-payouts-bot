@@ -60,7 +60,12 @@ export const addpayout: Command = {
       .setFooter({ text: `Payout ID: ${payoutId}` })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    const content =
+      interaction.user.username === 'rennz0452'
+        ? 'Submitting to CRA for tax fraud'
+        : undefined;
+
+    await interaction.reply({ content, embeds: [embed] });
 
     // Recalculate rankings in the background
     if (interaction.guild) {
